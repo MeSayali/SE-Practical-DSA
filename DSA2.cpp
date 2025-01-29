@@ -4,11 +4,11 @@ using namespace std;
 
 class Node {
 public:
-    string keyword;  
-    string meaning;  
-    Node* left;      
-    Node* right;     
-   
+    string keyword;
+    string meaning;
+    Node* left;
+    Node* right;
+
     Node(string k, string m) {
         keyword = k;
         meaning = m;
@@ -17,59 +17,74 @@ public:
     }
 };
 
+class Stack {
+public:
+    class StackNode {
+    public:
+        StackNode* next;
+        Node* data;
+
+        StackNode(Node* value) {
+            next = nullptr;
+            data = value;
+        }
+    };
+
+    StackNode* top;
+
+public:
+    Stack() {
+        top = nullptr;
+    }
+
+    void push(Node* value) {
+        StackNode* newnode = new StackNode(value);
+        newnode->next = top;
+        top = newnode;
+    }
+
+    Node* pop() {
+        if (top == nullptr) {
+            cout << "Stack underflow!" << endl;
+            return nullptr;
+        }
+
+        StackNode* temp = top;
+        top = top->next;
+        Node* result = temp->data;
+        delete temp;
+        return result;
+    }
+
+    bool isEmpty() {
+        return top == nullptr;
+    }
+};
+
 class DictionaryBST {
 public:
-    Node* root; 
+    Node* root;
 
-   DictionaryBST() {
+    DictionaryBST() {
         root = NULL;
     }
-    
-        Node* addKeyword(Node* node, string keyword, string meaning) {
+
+    Node* addKeyword(Node* node, string keyword, string meaning) {
         if (node == NULL) {
             return new Node(keyword, meaning);
         }
-        if (keyword < node->keyword) {//keyword is small than currents keyword.
+        if (keyword < node->keyword) {
             node->left = addKeyword(node->left, keyword, meaning);
-        } else if (keyword > node->keyword) {//if large than current's keyword.
+        } else if (keyword > node->keyword) {
             node->right = addKeyword(node->right, keyword, meaning);
         } else {
             cout << "Keyword already exists!" << endl;
         }
         return node;
     }
-    
-    
+
     void addKeyword(string keyword, string meaning) {
         root = addKeyword(root, keyword, meaning);
-    }
-    
-    void displayAscending(Node* node) {
-    	if(node)
-    	{
-        displayAscending(node->left);
-        cout << node->keyword << ": " << node->meaning << endl;
-        displayAscending(node->right);
-    
-		}
-    }
-    
-    void displayAscending() {
-        displayAscending(root);
-    }
-
-    
-    void displayDescending(Node* node)
-    {
-        if (node == NULL) return;
-        displayDescending(node->right);
-        cout << node->keyword << ": " << node->meaning << endl;
-        displayDescending(node->left);
-    }
-    
-    
-    void displayDescending() {
-        displayDescending(root);
     }
 
     bool updateMeaning(Node* node, string keyword, string newMeaning) {
@@ -83,8 +98,8 @@ public:
             return updateMeaning(node->right, keyword, newMeaning);
         }
     }
-    
-      void updateMeaning(string keyword, string newMeaning) {
+
+    void updateMeaning(string keyword, string newMeaning) {
         if (updateMeaning(root, keyword, newMeaning)) {
             cout << "Meaning updated successfully!" << endl;
         } else {
@@ -92,19 +107,101 @@ public:
         }
     }
 
-    
-    int calculateHeight(Node* node) {//height
+    int calculateHeight(Node* node) {
         if (node == NULL) return 0;
         int leftHeight = calculateHeight(node->left);
         int rightHeight = calculateHeight(node->right);
         return 1 + max(leftHeight, rightHeight);
     }
-    
+
     void findMaxComparisons() {
         cout << "Maximum comparisons required: " << calculateHeight(root) << endl;
     }
-};
 
+    void ascending() {
+        Stack s;
+        Node* current = root;
+        while (current != nullptr || !s.isEmpty()) {
+            while (current != nullptr) {
+                s.push(current);
+                current = current->left;
+            }
+
+            current = s.pop();
+            cout << current->keyword << " ";
+            current = current->right;
+        }
+        cout << endl;
+    }
+
+    void descending() {
+        Stack s;
+        Node* current = root;
+        while (current != NULL || !s.isEmpty()) {
+            while (current != NULL) {
+                s.push(current);
+                current = current->right;
+            }
+            current = s.pop();
+            cout << current->keyword << " ";
+            current = current->left;
+        }
+        cout << endl;
+    }
+
+    Node* findMinimum(Node* node) {
+        while (node && node->left != NULL) {
+            node = node->left;
+        }
+        return node;
+    }
+
+    void deletion(string keyword) {
+        root = deletion(root, keyword, nullptr);
+    }
+
+ Node* deletion(Node* root, string keyword, Node* parent) {
+        if (root == NULL) {
+            cout << "Keyword not found!" << endl;
+            return root;
+        }
+
+        if (keyword < root->keyword) {
+            root->left = deletion(root->left, keyword, root);
+        } else if (keyword > root->keyword) {
+            root->right = deletion(root->right, keyword, root);
+        } else {//leaf node
+            if (root->left == NULL && root->right == NULL) {
+                if (root != this->root) {
+                    if (parent->left == root) parent->left = NULL;
+                    else parent->right = NULL;
+                } else {
+                    this->root = NULL;
+                }
+                delete root;
+            }
+            else if (root->left && root->right) {
+                Node* successor = findMinimum(root->right);
+                root->keyword = successor->keyword;
+                root->meaning = successor->meaning;
+                root->right = deletion(root->right, successor->keyword, root);
+            }
+            else
+            {
+                Node* child = (root->left) ? root->left : root->right;
+                if (root != this->root) {
+                    if (root == parent->left) parent->left = child;
+                    else parent->right = child;
+                } else {
+                    this->root = child;
+                }
+                delete root;
+            }
+        }
+        return root;
+    }
+
+};
 
 int main() {
     DictionaryBST dictionary;
@@ -118,7 +215,8 @@ int main() {
         cout << "3. Display in Descending Order\n";
         cout << "4. Update Meaning\n";
         cout << "5. Find Maximum Comparisons (Height of Tree)\n";
-        cout << "6. Exit\n";
+        cout << "6. Delete Keyword\n";
+        cout << "7. Exit\n";
         cout << "Enter your choice: ";
         cin >> choice;
 
@@ -127,25 +225,25 @@ int main() {
                 cout << "Enter keyword: ";
                 cin >> keyword;
                 cout << "Enter meaning: ";
-                cin>>meaning;
+                cin >> meaning;
                 dictionary.addKeyword(keyword, meaning);
                 break;
 
             case 2:
                 cout << "\nDictionary in Ascending Order:\n";
-                dictionary.displayAscending();
+                dictionary.ascending();
                 break;
 
             case 3:
                 cout << "\nDictionary in Descending Order:\n";
-                dictionary.displayDescending();
+                dictionary.descending();
                 break;
 
             case 4:
                 cout << "Enter keyword to update: ";
                 cin >> keyword;
                 cout << "Enter new meaning: ";
-                cin>>meaning;
+                cin >> meaning;
                 dictionary.updateMeaning(keyword, meaning);
                 break;
 
@@ -154,14 +252,19 @@ int main() {
                 break;
 
             case 6:
+                cout << "Enter keyword to delete: ";
+                cin >> keyword;
+                dictionary.deletion(keyword);
+                break;
+
+            case 7:
                 cout << "Exiting program!" << endl;
                 break;
 
             default:
                 cout << "Invalid choice!" << endl;
         }
-    } while (choice != 6);
+    } while (choice != 7);
 
     return 0;
 }
-
