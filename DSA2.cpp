@@ -12,8 +12,7 @@ public:
     Node(string k, string m) {
         keyword = k;
         meaning = m;
-        left = NULL;
-        right = NULL;
+        left = right = NULL;
     }
 };
 
@@ -25,7 +24,7 @@ public:
         Node* data;
 
         StackNode(Node* value) {
-            next = nullptr;
+            next = NULL;
             data = value;
         }
     };
@@ -33,8 +32,8 @@ public:
     StackNode* top;
 
 public:
-    Stack() {
-        top = nullptr;
+    Stack() { 
+        top = NULL; 
     }
 
     void push(Node* value) {
@@ -44,9 +43,9 @@ public:
     }
 
     Node* pop() {
-        if (top == nullptr) {
+        if (top == NULL) {
             cout << "Stack underflow!" << endl;
-            return nullptr;
+            return NULL;
         }
 
         StackNode* temp = top;
@@ -56,8 +55,8 @@ public:
         return result;
     }
 
-    bool isEmpty() {
-        return top == nullptr;
+    bool isEmpty() { 
+        return top == NULL; 
     }
 };
 
@@ -65,30 +64,33 @@ class DictionaryBST {
 public:
     Node* root;
 
-    DictionaryBST() {
-        root = NULL;
+    DictionaryBST() { 
+        root = NULL; 
     }
 
+    // Recursive insertion (unchanged)
     Node* addKeyword(Node* node, string keyword, string meaning) {
-        if (node == NULL) {
-            return new Node(keyword, meaning);
-        }
-        if (keyword < node->keyword) {
+        if (node == NULL) return new Node(keyword, meaning);
+
+        if (keyword < node->keyword)
             node->left = addKeyword(node->left, keyword, meaning);
-        } else if (keyword > node->keyword) {
+        else if (keyword > node->keyword)
             node->right = addKeyword(node->right, keyword, meaning);
-        } else {
+        else
             cout << "Keyword already exists!" << endl;
-        }
+        
         return node;
     }
 
+    // Wrapper function for insertion
     void addKeyword(string keyword, string meaning) {
         root = addKeyword(root, keyword, meaning);
     }
 
+    // Recursive helper for updating meaning (unchanged)
     bool updateMeaning(Node* node, string keyword, string newMeaning) {
         if (node == NULL) return false;
+        
         if (keyword == node->keyword) {
             node->meaning = newMeaning;
             return true;
@@ -99,14 +101,15 @@ public:
         }
     }
 
+    // Wrapper function for updating meaning
     void updateMeaning(string keyword, string newMeaning) {
-        if (updateMeaning(root, keyword, newMeaning)) {
+        if (updateMeaning(root, keyword, newMeaning))
             cout << "Meaning updated successfully!" << endl;
-        } else {
+        else
             cout << "Keyword not found!" << endl;
-        }
     }
 
+    // Calculate the height of the BST (unchanged)
     int calculateHeight(Node* node) {
         if (node == NULL) return 0;
         int leftHeight = calculateHeight(node->left);
@@ -118,6 +121,7 @@ public:
         cout << "Maximum comparisons required: " << calculateHeight(root) << endl;
     }
 
+    // In-order traversal for ascending order display
     void ascending() {
         Stack s;
         Node* current = root;
@@ -126,14 +130,16 @@ public:
                 s.push(current);
                 current = current->left;
             }
-
             current = s.pop();
-            cout << current->keyword << " ";
-            current = current->right;
+            if (current != NULL) {
+                cout << current->keyword << " ";
+                current = current->right;
+            }
         }
         cout << endl;
     }
 
+    // In-order traversal in reverse for descending order display
     void descending() {
         Stack s;
         Node* current = root;
@@ -143,12 +149,15 @@ public:
                 current = current->right;
             }
             current = s.pop();
-            cout << current->keyword << " ";
-            current = current->left;
+            if (current != NULL) {
+                cout << current->keyword << " ";
+                current = current->left;
+            }
         }
         cout << endl;
     }
 
+    // Find the minimum node (used for deletion with two children)
     Node* findMinimum(Node* node) {
         while (node && node->left != NULL) {
             node = node->left;
@@ -156,51 +165,95 @@ public:
         return node;
     }
 
+   
     void deletion(string keyword) {
-        root = deletion(root, keyword, nullptr);
-    }
-
- Node* deletion(Node* root, string keyword, Node* parent) {
         if (root == NULL) {
-            cout << "Keyword not found!" << endl;
-            return root;
+            cout << "Tree is empty!" << endl;
+            return;
         }
-
-        if (keyword < root->keyword) {
-            root->left = deletion(root->left, keyword, root);
-        } else if (keyword > root->keyword) {
-            root->right = deletion(root->right, keyword, root);
-        } else {//leaf node
-            if (root->left == NULL && root->right == NULL) {
-                if (root != this->root) {
-                    if (parent->left == root) parent->left = NULL;
-                    else parent->right = NULL;
-                } else {
-                    this->root = NULL;
-                }
-                delete root;
-            }
-            else if (root->left && root->right) {
-                Node* successor = findMinimum(root->right);
-                root->keyword = successor->keyword;
-                root->meaning = successor->meaning;
-                root->right = deletion(root->right, successor->keyword, root);
-            }
+        
+        Node* parent = NULL;
+        Node* current = root;
+        
+        //Find the node to delete and its parent.
+        while (current != NULL && current->keyword != keyword) {
+            parent = current;
+            if (keyword < current->keyword)
+                current = current->left;
             else
-            {
-                Node* child = (root->left) ? root->left : root->right;
-                if (root != this->root) {
-                    if (root == parent->left) parent->left = child;
-                    else parent->right = child;
-                } else {
-                    this->root = child;
-                }
-                delete root;
-            }
+                current = current->right;
         }
-        return root;
+        
+        // If node not found, print a message and return.
+        if (current == NULL) {
+            cout << "Keyword not found!" << endl;
+            return;
+        }
+        
+        // 2. Case 1: Node to delete is a leaf (no children).
+        if (current->left == NULL && current->right == NULL) {
+            if (current == root) {
+                root = NULL;
+            } else if (parent->left == current) {
+                parent->left = NULL;
+            } else {
+                parent->right = NULL;
+            }
+            delete current;
+        }
+        // 3. Case 2: Node to delete has one child.
+        else if (current->left == NULL || current->right == NULL) {
+            Node* child = (current->left != NULL) ? current->left : current->right;
+            if (current == root) {
+                root = child;
+            } else if (parent->left == current) {
+                parent->left = child;
+            } else {
+                parent->right = child;
+            }
+            delete current;
+        }
+        // 4. Case 3: Node to delete has two children.
+        else {
+            // Find the in-order successor (the smallest node in the right subtree).
+            Node* successorParent = current;
+            Node* successor = current->right;
+            while (successor->left != NULL) {
+                successorParent = successor;
+                successor = successor->left;
+            }
+            // Replace current node's data with the successor's data.
+            current->keyword = successor->keyword;
+            current->meaning = successor->meaning;
+            // Remove the successor node.
+            if (successorParent->left == successor)
+                successorParent->left = successor->right;
+            else
+                successorParent->right = successor->right;
+            delete successor;
+        }
+        cout << "Node deleted successfully!" << endl;
+    }
+    // ------------------------------------------------------------
+
+    // Recursive search helper function (unchanged)
+    Node* search(Node* node, string keyword) {
+        if (node == NULL || node->keyword == keyword)
+            return node;
+        if (keyword < node->keyword)
+            return search(node->left, keyword);
+        else
+            return search(node->right, keyword);
     }
 
+    // Wrapper for searching a keyword.
+    void searchKeyword(string keyword) {
+        Node* result = search(root, keyword);
+        if (result != NULL)
+            cout << "Keyword: " << result->keyword << " | Meaning: " << result->meaning << endl;
+        else
+            cout << "Keyword not found!" << endl;
+    }
 };
 
 int main() {
@@ -215,8 +268,9 @@ int main() {
         cout << "3. Display in Descending Order\n";
         cout << "4. Update Meaning\n";
         cout << "5. Find Maximum Comparisons (Height of Tree)\n";
-        cout << "6. Delete Keyword\n";
-        cout << "7. Exit\n";
+        cout << "6. Delete Keyword (Non-Recursive)\n";
+        cout << "7. Search for a Keyword\n";
+        cout << "8. Exit\n";
         cout << "Enter your choice: ";
         cin >> choice;
 
@@ -224,8 +278,9 @@ int main() {
             case 1:
                 cout << "Enter keyword: ";
                 cin >> keyword;
+                cin.ignore();  // Clear newline from input buffer
                 cout << "Enter meaning: ";
-                cin >> meaning;
+                getline(cin, meaning);
                 dictionary.addKeyword(keyword, meaning);
                 break;
 
@@ -242,8 +297,9 @@ int main() {
             case 4:
                 cout << "Enter keyword to update: ";
                 cin >> keyword;
+                cin.ignore();
                 cout << "Enter new meaning: ";
-                cin >> meaning;
+                getline(cin, meaning);
                 dictionary.updateMeaning(keyword, meaning);
                 break;
 
@@ -255,16 +311,24 @@ int main() {
                 cout << "Enter keyword to delete: ";
                 cin >> keyword;
                 dictionary.deletion(keyword);
+                cout << "\nDictionary after deletion (Ascending Order):\n";
+                dictionary.ascending();
                 break;
 
             case 7:
+                cout << "Enter keyword to search: ";
+                cin >> keyword;
+                dictionary.searchKeyword(keyword);
+                break;
+
+            case 8:
                 cout << "Exiting program!" << endl;
                 break;
 
             default:
                 cout << "Invalid choice!" << endl;
         }
-    } while (choice != 7);
+    } while (choice != 8);
 
     return 0;
 }
