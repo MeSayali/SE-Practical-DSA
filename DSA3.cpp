@@ -1,203 +1,132 @@
 #include <iostream>
 using namespace std;
 
-// Node class for Threaded BST
 class Node {
 public:
-    int key;
+    int info;
     Node *left, *right;
-    bool isThreaded; // True if right pointer is a thread
-
-    Node(int k) {
-        key = k;
-        left = right = nullptr;
-        isThreaded = false;
+    bool lthread, rthread;
+    
+    Node(int key) {
+        info = key;
+        left = right = NULL;
+        lthread = rthread = true;//not pointting to children but can be used as thread
     }
 };
 
-// Threaded BST class
-class ThreadedBST {
+class TBTree {
 private:
     Node *root;
 
+    Node* inorderSuccessor(Node* ptr) {
+        if (ptr->rthread)//if it is thread==true
+            return ptr->right;//it will return it
+        
+        ptr = ptr->right;//if not move to right child
+        while (!ptr->lthread)//if ptr is not lthread move to leftmost node
+            ptr = ptr->left;
+        return ptr;
+    }
+
 public:
-    ThreadedBST() {
-        root = nullptr;
-    }
-
-    // Insert a new node into TBT
-    void insert(int key) {
-        Node *parent = nullptr, *curr = root;
-
-        while (curr != nullptr) {
-            parent = curr;
-            if (key < curr->key) {
-                if (curr->left == nullptr)
-                    break;
-                curr = curr->left;
-            } else {
-                if (curr->isThreaded)
-                    break;
-                curr = curr->right;
-            }
-        }
-
-        Node *newNode = new Node(key);
-        if (parent == nullptr) {
-            root = newNode;
-        } else if (key < parent->key) {
-            parent->left = newNode;
-            newNode->right = parent;
-            newNode->isThreaded = true;
-        } else {
-            newNode->right = parent->right;
-            parent->right = newNode;
-            parent->isThreaded = false;
-            newNode->isThreaded = true;
-        }
-    }
-
-    // Inorder Traversal (Non-Recursive)
-    void inorder() {
-        Node *curr = root;
-        while (curr && curr->left) {
-            curr = curr->left;
-        }
-
-        while (curr) {
-            cout << curr->key << " ";
-            if (curr->isThreaded)
-                curr = curr->right;
-            else {
-                curr = curr->right;
-                while (curr && curr->left)
-                    curr = curr->left;
-            }
-        }
-        cout << endl;
-    }
-
-    // Preorder Traversal (Non-Recursive)
-    void preorder() {
-        Node *curr = root;
-        while (curr) {
-            cout << curr->key << " ";
-
-            if (curr->left) {
-                curr = curr->left;
-            } else {
-                while (curr && curr->isThreaded) {
-                    curr = curr->right;
-                    if (curr)
-                        cout << curr->key << " ";
-                }
-                if (curr)
-                    curr = curr->right;
-            }
-        }
-        cout << endl;
-    }
-
-    // Delete a node from TBT
-    void deleteNode(int key) {
-        Node *parent = nullptr, *curr = root;
-
-        while (curr != nullptr) {
-            if (curr->key == key)
-                break;
-            parent = curr;
-            if (key < curr->key) {
-                curr = curr->left;
-            } else {
-                if (curr->isThreaded)
-                    break;
-                curr = curr->right;
-            }
-        }
-
-        if (curr == nullptr) {
-            cout << "Key not found!" << endl;
-            return;
-        }
-
-        if (curr->left == nullptr && (curr->right == nullptr || curr->isThreaded)) {
-            if (parent == nullptr)
-                root = nullptr;
-            else if (parent->left == curr)
-                parent->left = nullptr;
-            else
-                parent->right = curr->right;
-            delete curr;
-        } else if (curr->left == nullptr || (!curr->isThreaded && curr->right == nullptr)) {
-            Node *child = (curr->left != nullptr) ? curr->left : curr->right;
-            if (parent == nullptr)
-                root = child;
-            else if (parent->left == curr)
-                parent->left = child;
-            else
-                parent->right = child;
-            delete curr;
-        } else {
-            Node *successor = curr->right;
-            Node *succParent = curr;
-            while (successor->left) {
-                succParent = successor;
-                successor = successor->left;
-            }
-            curr->key = successor->key;
-            if (succParent->left == successor)
-                succParent->left = successor->right;
-            else
-                succParent->right = successor->right;
-            delete successor;
-        }
-    }
-
-    // Menu for user interaction
-    void menu() {
-        int choice, value;
-        do {
-            cout << "\n------ Threaded Binary Search Tree Menu ------\n";
-            cout << "1. Insert a Node\n";
-            cout << "2. Inorder Traversal (Non-Recursive)\n";
-            cout << "3. Preorder Traversal (Non-Recursive)\n";
-            cout << "4. Delete a Node\n";
-            cout << "5. Exit\n";
-            cout << "Enter your choice: ";
-            cin >> choice;
-
-            switch (choice) {
-                case 1:
-                    cout << "Enter value to insert: ";
-                    cin >> value;
-                    insert(value);
-                    break;
-                case 2:
-                    cout << "Inorder Traversal: ";
-                    inorder();
-                    break;
-                case 3:
-                    cout << "Preorder Traversal: ";
-                    preorder();
-                    break;
-                case 4:
-                    cout << "Enter value to delete: ";
-                    cin >> value;
-                    deleteNode(value);
-                    break;
-                case 5:
-                    cout << "Exiting...\n";
-                    break;
-                default:
-                    cout << "Invalid choice! Try again.\n";
-            }
-        } while (choice != 5);
-    }
+    TBTree() { root = NULL; }
+    
+    void insert(int key);
+    void inorder();
+    void preorder();
+    void deleteNode(int key);
 };
 
-// Driver Code
+void TBTree::insert(int ikey) {
+    Node *ptr = root, *par = NULL;
+    while (ptr != NULL) {//to find insertion point
+        if (ikey == ptr->info) {
+            cout << "Duplicate Key\n";
+            return;
+        }
+        par = ptr;//parent=current child
+        if (ikey < ptr->info) {
+            if (!ptr->lthread)//if it is false
+                ptr = ptr->left;//move to left
+            else
+                break;//if left is thread  then break
+        } else {
+            if (!ptr->rthread)
+                ptr = ptr->right;
+            else
+                break;
+        }
+    }
+    //inserting node
+    Node* tmp = new Node(ikey);
+    if (par == NULL) {
+        root = tmp;
+    } else if (ikey < par->info) {
+        tmp->left = par->left;
+        tmp->right = par;
+        par->lthread = false;
+        par->left = tmp;
+    } else {
+        tmp->left = par;
+        tmp->right = par->right;
+        par->rthread = false;
+        par->right = tmp;
+    }
+}
+
+void TBTree::inorder() {
+    if (root == NULL) {
+        cout << "Tree is empty\n";
+        return;
+    }
+    Node* ptr = root;
+    while (!ptr->lthread)
+        ptr = ptr->left;
+    
+    while (ptr != NULL) {
+        cout << ptr->info << " ";
+        ptr = inorderSuccessor(ptr);
+    }
+    cout << "\n";
+}
+
+void TBTree::preorder() {
+    if (root == NULL) {
+        cout << "Tree is empty\n";
+        return;
+    }
+    Node* ptr = root;
+    while (ptr != NULL) {
+        cout << ptr->info << " ";
+        if (!ptr->lthread)
+            ptr = ptr->left;
+        else if (!ptr->rthread)
+            ptr = ptr->right;
+        else {
+            while (ptr != NULL && ptr->rthread)
+                ptr = ptr->right;
+            if (ptr != NULL)
+                ptr = ptr->right;
+        }
+    }
+    cout << "\n";
+}
+
 int main() {
-    ThreadedBST tbt;
-    tbt.menu();
+    TBTree tbt;
+    tbt.insert(20);
+    tbt.insert(10);
+    tbt.insert(30);
+    tbt.insert(5);
+    tbt.insert(15);
+    tbt.insert(25);
+    tbt.insert(35);
+    
+    cout << "Inorder Traversal: ";
+    tbt.inorder();
+    
+    cout << "Preorder Traversal: ";
+    tbt.preorder();
+    
     return 0;
 }
