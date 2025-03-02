@@ -19,12 +19,20 @@ private:
     Node *root;
 
     Node* inorderSuccessor(Node* ptr) {
-        if (ptr->rthread)//if it is thread==true
+        if (ptr->rthread)////if it is thread==true
             return ptr->right;//it will return it
-        
         ptr = ptr->right;//if not move to right child
         while (!ptr->lthread)//if ptr is not lthread move to leftmost node
             ptr = ptr->left;
+        return ptr;
+    }
+
+    Node* inorderPredecessor(Node* ptr) {
+        if (ptr->lthread)
+            return ptr->left;
+        ptr = ptr->left;
+        while (!ptr->rthread)
+            ptr = ptr->right;
         return ptr;
     }
 
@@ -39,17 +47,17 @@ public:
 
 void TBTree::insert(int ikey) {
     Node *ptr = root, *par = NULL;
-    while (ptr != NULL) {//to find insertion point
+    while (ptr != NULL) {
         if (ikey == ptr->info) {
             cout << "Duplicate Key\n";
             return;
         }
-        par = ptr;//parent=current child
+        par = ptr;
         if (ikey < ptr->info) {
-            if (!ptr->lthread)//if it is false
-                ptr = ptr->left;//move to left
+            if (!ptr->lthread)
+                ptr = ptr->left;
             else
-                break;//if left is thread  then break
+                break;
         } else {
             if (!ptr->rthread)
                 ptr = ptr->right;
@@ -57,7 +65,6 @@ void TBTree::insert(int ikey) {
                 break;
         }
     }
-    //inserting node
     Node* tmp = new Node(ikey);
     if (par == NULL) {
         root = tmp;
@@ -112,21 +119,88 @@ void TBTree::preorder() {
     cout << "\n";
 }
 
+void TBTree::deleteNode(int key) {
+    Node *ptr = root, *par = NULL;
+    while (ptr != NULL) {
+        if (key == ptr->info)
+            break;
+        par = ptr;
+        if (key < ptr->info) {
+            if (!ptr->lthread)
+                ptr = ptr->left;
+            else
+                return;
+        } else {
+            if (!ptr->rthread)
+                ptr = ptr->right;
+            else
+                return;
+        }
+    }
+    if (ptr == NULL) {
+        cout << "Key not found!\n";
+        return;
+    }
+    
+    if (!ptr->lthread && !ptr->rthread) {
+        Node* succ = inorderSuccessor(ptr);
+        ptr->info = succ->info;
+        deleteNode(succ->info);
+        return;
+    }
+    
+    Node *child = (ptr->lthread) ? ptr->right : ptr->left;
+    if (par == NULL) {
+        root = child;
+    } else if (ptr == par->left) {
+        par->left = child;
+        par->lthread = ptr->lthread;
+    } else {
+        par->right = child;
+        par->rthread = ptr->rthread;
+    }
+    if (!ptr->lthread) {
+        Node* pred = inorderPredecessor(ptr);
+        pred->right = ptr->right;
+    } else if (!ptr->rthread) {
+        Node* succ = inorderSuccessor(ptr);
+        succ->left = ptr->left;
+    }
+    delete ptr;
+}
+
 int main() {
     TBTree tbt;
-    tbt.insert(20);
-    tbt.insert(10);
-    tbt.insert(30);
-    tbt.insert(5);
-    tbt.insert(15);
-    tbt.insert(25);
-    tbt.insert(35);
-    
-    cout << "Inorder Traversal: ";
-    tbt.inorder();
-    
-    cout << "Preorder Traversal: ";
-    tbt.preorder();
-    
+    int choice, key;
+    do {
+        cout << "\nMenu:\n";
+        cout << "1. Insert\n2. Inorder Traversal\n3. Preorder Traversal\n4. Delete\n5. Exit\nEnter your choice: ";
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                cout << "Enter key to insert: ";
+                cin >> key;
+                tbt.insert(key);
+                break;
+            case 2:
+                cout << "Inorder Traversal: ";
+                tbt.inorder();
+                break;
+            case 3:
+                cout << "Preorder Traversal: ";
+                tbt.preorder();
+                break;
+            case 4:
+                cout << "Enter key to delete: ";
+                cin >> key;
+                tbt.deleteNode(key);
+                break;
+            case 5:
+                cout << "Exiting...\n";
+                break;
+            default:
+                cout << "Invalid choice! Try again.\n";
+        }
+    } while (choice != 5);
     return 0;
 }
