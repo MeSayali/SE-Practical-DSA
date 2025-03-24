@@ -1,58 +1,72 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <limits.h>
+
 using namespace std;
 
-void primMST(int n, vector<vector<pair<int, int>>>& graph) {
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
-    vector<bool> visited(n, false);
-    vector<int> parent(n, -1);
-    vector<int> key(n, INT_MAX); // Store min weight for each vertex
-    int totalCost = 0;
+#define MAX 100  // Maximum number of vertices
 
-    pq.push({0, 0}); // Start from node 0
-    key[0] = 0;
+int n;  // Number of vertices
+int graph[MAX][MAX];  // Adjacency matrix
 
-    while (!pq.empty()) {
-        auto [cost, u] = pq.top();
-        pq.pop();
+// Function to find the vertex with the minimum key value from the set of vertices not yet included in MST
+int minKey(int key[], bool mstSet[]) {
+    int min = INT_MAX, min_index;
+    
+    for (int v = 0; v < n; v++) {
+        if (!mstSet[v] && key[v] < min) {
+            min = key[v], min_index = v;
+        }
+    }
+    return min_index;
+}
 
-        if (visited[u]) continue;
-        visited[u] = true;
-        totalCost += cost;
+// Function to run Prim’s algorithm
+void primMST() {
+    int parent[MAX]; // Stores the MST
+    int key[MAX]; // Stores minimum weight to reach a node
+    bool mstSet[MAX]; // Stores vertices included in MST
 
-        if (parent[u] != -1)
-            cout << "Connect office " << parent[u] << " to " << u << " with cost " << cost << endl;
+    // Initialize all keys as infinite and mstSet[] as false
+    for (int i = 0; i < n; i++) {
+        key[i] = INT_MAX, mstSet[i] = false;
+    }
 
-        for (auto [v, weight] : graph[u]) {
-            if (!visited[v] && weight < key[v]) {
-                key[v] = weight;
-                pq.push({weight, v});
-                parent[v] = u;
+    key[0] = 0; // Start from the first node
+    parent[0] = -1; // First node is the root of MST
+
+    for (int count = 0; count < n - 1; count++) {
+        int u = minKey(key, mstSet); // Pick the minimum key vertex not yet included in MST
+        mstSet[u] = true; // Include the vertex in MST
+
+        // Update key values of adjacent vertices
+        for (int v = 0; v < n; v++) {
+            if (graph[u][v] && !mstSet[v] && graph[u][v] < key[v]) {
+                parent[v] = u, key[v] = graph[u][v];
             }
         }
     }
 
+    // Print the MST
+    cout << "Edge \tWeight\n";
+    int totalCost = 0;
+    for (int i = 1; i < n; i++) {
+        cout << parent[i] << " - " << i << " \t" << graph[i][parent[i]] << "\n";
+        totalCost += graph[i][parent[i]];
+    }
     cout << "Total Minimum Cost: " << totalCost << endl;
 }
 
 int main() {
-    int n, m;
-    cout << "Enter the number of offices: ";
+    int m;  // Number of edges
+    cout << "Enter the number of vertices: ";
     cin >> n;
-    cout << "Enter the number of connections: ";
+    cout << "Enter the number of edges: ";
     cin >> m;
 
-    vector<vector<pair<int, int>>> graph(n);
+    // Initialize adjacency matrix with 0
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            graph[i][j] = 0;
 
-    cout << "Enter connections (office1 office2 cost):\n";
-    for (int i = 0; i < m; i++) {
-        int u, v, cost;
-        cin >> u >> v >> cost;
-        graph[u].push_back({v, cost});
-        graph[v].push_back({u, cost});
-    }
-
-    cout << "\nMinimum Spanning Tree (MST) using Prim's Algorithm:\n";
-    primMST(n, graph);
-
-    return 0;
-}
+    cout << "Enter edges (vertex1 vertex2 cost):\n";
+    for (
