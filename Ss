@@ -69,4 +69,15 @@ int main() {
             graph[i][j] = 0;
 
     cout << "Enter edges (vertex1 vertex2 cost):\n";
-    for (
+    for (int i = 0; i < m; i++) {
+        int u, v, cost;
+        cin >> u >> v >> cost;
+        graph[u][v] = cost;
+        graph[v][u] = cost; // Since the graph is undirected
+    }
+
+    cout << "\nMinimum Spanning Tree (MST) using Prim's Algorithm:\n";
+    primMST();
+
+    return 0;
+}
