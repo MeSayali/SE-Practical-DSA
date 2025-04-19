@@ -1,0 +1,151 @@
+#include <iostream>
+using namespace std;
+
+class Node {
+    int key; //actual value store karega..
+    Node *left = NULL, *right = NULL; //pointers
+
+public:
+    friend class OBST;//so can access the private members of Node..
+};
+
+class OBST 
+{
+    int R[100][100];//stores optimal root index....
+    int C[100][100];
+    Node *root = NULL;
+    int *values = NULL;//store the sorted keys
+    int *frequencies = NULL;
+    int totalNodes = 0;//total no. of keys
+
+    int sumOfFrequencies(0 *arr, int low, int high) {  //total frequency between two indice..
+        int sum = 0;
+        for (int i = low; i < high; i++) {
+            sum += arr[i];
+        }
+        return sum;
+    }
+
+    void findOptimalSubTree(int *freqs, int numNodes, int n) {
+        for (int i = 0; i < n - numNodes; i++) 
+		{
+            int j = numNodes + i;
+            int minCost = 9999;
+            int minRoot = R[i][j - 1];
+            for (int k = i + 1; k <= j; k++) {
+                int cost = C[i][k - 1] + C[k][j]; 
+                if (cost < minCost) {
+                    minCost = cost;
+                    minRoot = k;
+                }
+            }
+            C[i][j] = minCost + sumOfFrequencies(freqs, i, j);
+            R[i][j] = minRoot;
+        }
+    }
+
+        Node* constructOBST(int i, int j, int *values) {
+        if (i == j) return NULL;
+
+        Node *node = new Node();
+        node->key = values[R[i][j] - 1];
+        node->left = constructOBST(i, R[i][j] - 1, values);
+        node->right = constructOBST(R[i][j], j, values);
+        return node;
+    }
+
+    void inOrder(Node *node) {
+        if (node == NULL) return;
+        inOrder(node->left);
+        cout << node->key << " ";
+        inOrder(node->right);
+    }
+
+    void preOrder(Node *node) {
+        if (node == NULL) return;
+        cout << node->key << " ";
+        preOrder(node->left);
+        preOrder(node->right);
+    }
+
+public:
+    void inputValues() {
+        cout << "Enter number of nodes: ";
+        cin >> totalNodes;
+        values = new int[totalNodes];
+        frequencies = new int[totalNodes];
+        for (int i = 0; i < totalNodes; i++) {
+            cout << "Enter value and frequency for key " << i + 1 << ": ";
+            cin >> values[i] >> frequencies[i];
+        }
+    }
+
+    void findOBST() {
+        int n = totalNodes + 1;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                C[i][j] = 0;
+                R[i][j] = 0;
+            }
+        }
+        
+        for (int i = 0; i < n - 1; i++) 
+		{
+            int j = i + 1;
+            C[i][j] = frequencies[i];
+            R[i][j] = j;
+        }
+
+        for (int i = 2; i < n; i++) {
+            findOptimalSubTree(frequencies, i, n);
+        }
+
+        cout << "Cost of OBST is: " << C[0][n - 1] << endl;
+        root = constructOBST(0, n - 1, values);
+    }
+
+    void displayTraversals() {
+        if (root == NULL) {
+            cout << "OBST not constructed yet.\n";
+            return;
+        }
+        cout << "InOrder Traversal: ";
+        inOrder(root);
+        cout << "\nPreOrder Traversal: ";
+        preOrder(root);
+        cout << endl;
+    }
+};
+
+int main() {
+    OBST tree;
+    int choice;
+    while (true) {
+        cout << "\n---- OBST Menu ----\n";
+        cout << "1. Input keys and frequencies\n";
+        cout << "2. Build Optimal BST\n";
+        cout << "3. Display Inorder and Preorder\n";
+        cout << "4. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                tree.inputValues();
+                break;
+            case 2:
+                tree.findOBST();
+                break;
+            case 3:
+                tree.displayTraversals();
+                break;
+            case 4:
+                cout << "Exiting program.\n";
+                return 0;
+            default:
+                cout << "Invalid choice! Try again.\n";
+        }
+    }
+
+    return 0;
+}
